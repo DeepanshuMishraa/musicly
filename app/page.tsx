@@ -1,12 +1,26 @@
 import { Appbar } from "@/components/Appbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Music, Users, Radio, Headphones } from "lucide-react";
+import { Music, Users, Radio } from "lucide-react";
+import Link from "next/link";
+
+
+interface FeatureCardProps{
+    icon : JSX.Element;
+    title:String;
+    description:String;
+}
+
+interface StepCardProps{
+    number:String;
+    title:String;
+    description:String;
+}
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-        <Appbar/>
+      <Appbar />
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <h1 className="mb-6 text-5xl font-bold leading-tight">
@@ -18,9 +32,11 @@ export default function LandingPage() {
           Stream music together in virtual spaces. Share your favorite tunes and
           discover new ones.
         </p>
-        <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
-          Get Started
-        </Button>
+        <Link href="/dashboard">
+          <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
+            Get Started
+          </Button>
+        </Link>
       </section>
 
       {/* Features Section */}
@@ -98,13 +114,15 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-gray-900 py-8 text-center text-gray-400">
-        <p>&copy; {new Date().getFullYear()} MusicSpace. All rights reserved.</p>
+        <p>
+          &copy; {new Date().getFullYear()} MusicSpace. All rights reserved.
+        </p>
       </footer>
     </div>
   );
 }
 
-function FeatureCard({ icon, title, description }) {
+function FeatureCard({ icon, title, description }:FeatureCardProps) {
   return (
     <div className="rounded-lg bg-gray-700 p-6 text-center shadow-lg transition-transform hover:scale-105">
       <div className="mb-4 flex justify-center">{icon}</div>
@@ -114,7 +132,7 @@ function FeatureCard({ icon, title, description }) {
   );
 }
 
-function StepCard({ number, title, description }) {
+function StepCard({ number, title, description }:StepCardProps) {
   return (
     <div className="relative rounded-lg bg-gray-800 p-6 text-center shadow-lg">
       <div className="absolute -top-4 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 text-xl font-bold text-gray-900">

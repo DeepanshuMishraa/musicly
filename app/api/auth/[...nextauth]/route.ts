@@ -19,6 +19,16 @@ const handler = NextAuth({
       ) {
         return false;
       }
+      const user = await prisma.user.findUnique({
+        where:{
+            email:params.user.email
+        }
+      })
+
+      if(user){
+        return true
+      }
+      
       await prisma.user.create({
         data: {
           email: params.user.email,

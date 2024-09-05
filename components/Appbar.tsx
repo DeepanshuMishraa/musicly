@@ -8,7 +8,7 @@ export const Appbar = ()=>{
 
     const session  = useSession();
     return (
-      <div className="flex justify-between p-4">
+      <div className="flex justify-between p-4 border-b">
         <div>
           <Link href="/" className="font-bold text-3xl">Musly</Link>
         </div>

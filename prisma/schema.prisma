@@ -42,4 +42,5 @@ model Stream{
     extractedurl String
     spaceId String
     space Space @relation(fields: [spaceId], references: [id])
+    createdAt DateTime @default(now())
 }
