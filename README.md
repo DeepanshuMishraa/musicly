@@ -17,3 +17,8 @@ Musly allows you to join spaces and listen to music together with others. You ca
 - Shadcn
 - v0.dev
 - youtube api
+
+# yet to be added
+- [ ] websockets 
+- [ ] revamping the UI
+- [ ] implementing toast and middlewares
