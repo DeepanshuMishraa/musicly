@@ -1,4 +1,3 @@
-// app/api/stream/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
@@ -17,29 +16,30 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user?.email) {
-      return NextResponse.json({ message: "Unauthorized", status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const data = StreamSchema.parse(await req.json());
     const isyt = data.url.match(YT_REGEX);
 
     if (!isyt) {
-      return NextResponse.json({ message: "Invalid YouTube URL", status: 400 });
+      return NextResponse.json({ message: "Invalid YouTube URL" }, { status: 400 });
     }
 
     const extractedId = data.url.split("v=")[1];
     const videoDetails = await youtubesearchapi.GetVideoDetails(extractedId);
 
     const existingStream = await prisma.stream.findFirst({
-        where:{
-            extractedurl:extractedId
-        }
-    })
+      where: {
+        extractedurl: extractedId,
+        spaceId: data.spaceId
+      }
+    });
 
-    if(!existingStream){
-        return NextResponse.json({
-            message:"Already in the queue or playing",
-        },{status:501})
+    if (existingStream) {
+      return NextResponse.json({
+        message: "Already in the queue or playing",
+      }, { status: 400 });
     }
 
     const stream = await prisma.stream.create({
@@ -52,10 +52,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ message: "Stream created", status: 200, stream });
+    return NextResponse.json({ message: "Stream created", stream }, { status: 200 });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ message: "Failed to create stream", status: 500 });
+    return NextResponse.json({ message: "Failed to create stream" }, { status: 500 });
   }
 }
 
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     const spaceId = searchParams.get('spaceId');
 
     if (!spaceId) {
-      return NextResponse.json({ message: "Space ID is required", status: 400 });
+      return NextResponse.json({ message: "Space ID is required" }, { status: 400 });
     }
 
     const streams = await prisma.stream.findMany({
@@ -73,9 +73,9 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'asc' },
     });
 
-    return NextResponse.json({ streams, status: 200 });
+    return NextResponse.json({ streams }, { status: 200 });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ message: "Failed to fetch streams", status: 500 });
+    return NextResponse.json({ message: "Failed to fetch streams" }, { status: 500 });
   }
 }

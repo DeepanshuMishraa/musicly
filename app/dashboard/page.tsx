@@ -11,6 +11,7 @@ import YouTube from 'react-youtube';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import prisma from '@/lib/db';
 import { Appbar } from '@/components/Appbar';
+import { useToast } from '@/hooks/use-toast';
 
 interface Space {
   id: string;
@@ -39,6 +40,8 @@ const DashboardPage: React.FC = () => {
   const [newSpaceDescription, setNewSpaceDescription] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
+  const {toast} = useToast();
+
   useEffect(() => {
     fetchSpaces();
   }, []);
@@ -61,9 +64,17 @@ const DashboardPage: React.FC = () => {
       setCurrentSpace(space);
       setIsCreator(response.data.isCreator);
       await fetchStreams(space.id);
+      toast({
+        title: 'Space Joined',
+        description: 'You have successfully joined the space.',
+        variant:"default",
+      })
     } catch (error) {
-      console.error("Failed to join space:", error);
-      setError("Failed to join space. Please try again later.");
+        toast({
+            title: 'Failed to join space',
+            description: 'Please try again later.',
+            variant:"destructive",
+        })
     }
   };
 
@@ -95,9 +106,17 @@ const DashboardPage: React.FC = () => {
           setCurrentSong(response.data.stream);
         }
       }
+      toast({
+        title:'Song Added Succesfully',
+        description:'Song has been added to the queue.',
+        variant:"default",
+      })
     } catch (error) {
-      console.error('Failed to create stream:', error);
-      setError('Failed to add song to queue. Please try again.');
+        toast({
+            title:'Failed to add song',
+            description:'Please try again later.',
+            variant:"destructive",
+        })
     }
   };
 
@@ -112,9 +131,17 @@ const DashboardPage: React.FC = () => {
         setNewSpaceName('');
         setNewSpaceDescription('');
       }
+        toast({
+            title:'Space Created Succesfully',
+            description:'Space has been created.',
+            variant:"default",
+        })
     } catch (error) {
-      console.error('Failed to create space:', error);
-      setError('Failed to create space. Please try again.');
+        toast({
+            title:'Failed to create space',
+            description:'Please try again later.',
+            variant:"destructive",
+        })
     }
   };
 
@@ -128,9 +155,20 @@ const DashboardPage: React.FC = () => {
     setQueue(newQueue);
     if (newQueue.length > 0) {
       setCurrentSong(newQueue[0]);
+      toast({
+        title:'Song Playing',
+        description:'Song has started playing.',
+        variant:"default",
+      })
     } else {
       setCurrentSong(null);
+        toast({
+            title:'Queue Empty',
+            description:'No more songs in the queue.',
+            variant:"default",
+        })
     }
+
   };
 
 return (

@@ -28,7 +28,7 @@ const handler = NextAuth({
       if(user){
         return true
       }
-      
+
       await prisma.user.create({
         data: {
           email: params.user.email,
