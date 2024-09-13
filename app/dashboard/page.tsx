@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
@@ -9,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import YouTube from 'react-youtube';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import prisma from '@/lib/db';
 import { Appbar } from '@/components/Appbar';
+import SpotifyPlayer from 'react-spotify-player';
 import { useToast } from '@/hooks/use-toast';
 
 interface Space {
@@ -25,6 +24,7 @@ interface Stream {
   id: string;
   title: string;
   extractedurl: string;
+  url: string;
 }
 
 const DashboardPage: React.FC = () => {
@@ -40,7 +40,7 @@ const DashboardPage: React.FC = () => {
   const [newSpaceDescription, setNewSpaceDescription] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  const {toast} = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchSpaces();
@@ -67,14 +67,14 @@ const DashboardPage: React.FC = () => {
       toast({
         title: 'Space Joined',
         description: 'You have successfully joined the space.',
-        variant:"default",
+        variant: "default",
       })
     } catch (error) {
-        toast({
-            title: 'Failed to join space',
-            description: 'Please try again later.',
-            variant:"destructive",
-        })
+      toast({
+        title: 'Failed to join space',
+        description: 'Please try again later.',
+        variant: "destructive",
+      })
     }
   };
 
@@ -107,16 +107,16 @@ const DashboardPage: React.FC = () => {
         }
       }
       toast({
-        title:'Song Added Succesfully',
-        description:'Song has been added to the queue.',
-        variant:"default",
+        title: 'Song Added Successfully',
+        description: 'Song has been added to the queue.',
+        variant: "default",
       })
     } catch (error) {
-        toast({
-            title:'Failed to add song',
-            description:'Please try again later.',
-            variant:"destructive",
-        })
+      toast({
+        title: 'Failed to add song',
+        description: 'Please try again later.',
+        variant: "destructive",
+      })
     }
   };
 
@@ -131,17 +131,17 @@ const DashboardPage: React.FC = () => {
         setNewSpaceName('');
         setNewSpaceDescription('');
       }
-        toast({
-            title:'Space Created Succesfully',
-            description:'Space has been created.',
-            variant:"default",
-        })
+      toast({
+        title: 'Space Created Successfully',
+        description: 'Space has been created.',
+        variant: "default",
+      })
     } catch (error) {
-        toast({
-            title:'Failed to create space',
-            description:'Please try again later.',
-            variant:"destructive",
-        })
+      toast({
+        title: 'Failed to create space',
+        description: 'Please try again later.',
+        variant: "destructive",
+      })
     }
   };
 
@@ -156,26 +156,60 @@ const DashboardPage: React.FC = () => {
     if (newQueue.length > 0) {
       setCurrentSong(newQueue[0]);
       toast({
-        title:'Song Playing',
-        description:'Song has started playing.',
-        variant:"default",
+        title: 'Song Playing',
+        description: 'Song has started playing.',
+        variant: "default",
       })
     } else {
       setCurrentSong(null);
-        toast({
-            title:'Queue Empty',
-            description:'No more songs in the queue.',
-            variant:"default",
-        })
+      toast({
+        title: 'Queue Empty',
+        description: 'No more songs in the queue.',
+        variant: "default",
+      })
     }
-
   };
 
-return (
-    <div className="container mx-auto p-4">
-        <Appbar/>
+  const isSpotifyTrack = (url: string) => {
+    return url.includes('spotify.com/track/');
+  };
 
-      {error && <div className="bg-red-100  border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
+  const renderPlayer = () => {
+    if (!currentSong) return null;
+
+    if (isSpotifyTrack(currentSong.url)) {
+      const size = {
+        width: '100%',
+        height: 300,
+      };
+      const view = 'list';
+      const theme = 'black';
+
+      return (
+        <SpotifyPlayer
+          uri={`spotify:track:${currentSong.extractedurl}`}
+          size={size}
+          view={view}
+          theme={theme}
+        />
+      );
+    } else {
+      return (
+        <YouTube
+          videoId={currentSong.extractedurl}
+          opts={{ width: '100%', height: '300', playerVars: { autoplay: 1 } }}
+          onEnd={onVideoEnd}
+          ref={playerRef}
+        />
+      );
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <Appbar />
+
+      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
 
       {!currentSpace ? (
         <div>
@@ -235,12 +269,7 @@ return (
               <CardContent>
                 {currentSong && (
                   <div>
-                    <YouTube
-                      videoId={currentSong.extractedurl}
-                      opts={{ width: '100%', height: '300' }}
-                      onEnd={onVideoEnd}
-                      ref={playerRef}
-                    />
+                    {renderPlayer()}
                     <p className="mt-2">{currentSong.title}</p>
                   </div>
                 )}
@@ -264,7 +293,7 @@ return (
           <div className="mt-4">
             <Input
               type="text"
-              placeholder="Paste YouTube URL here"
+              placeholder="Paste YouTube or Spotify URL here"
               value={newSongUrl}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSongUrl(e.target.value)}
             />
