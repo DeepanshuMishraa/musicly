@@ -2,13 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,8 +22,10 @@ interface Space {
   id: string;
   name: string;
   description: string;
-  author: string;
   authorId: string;
+  author: {
+    name: string;
+  };
 }
 
 interface Stream {
@@ -37,6 +33,7 @@ interface Stream {
   title: string;
   extractedurl: string;
   url: string;
+  startedAt?: string;
 }
 
 const DashboardPage: React.FC = () => {
@@ -51,6 +48,8 @@ const DashboardPage: React.FC = () => {
   const [newSpaceName, setNewSpaceName] = useState<string>("");
   const [newSpaceDescription, setNewSpaceDescription] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [userId, setUserId] = useState<string>("");
 
   const { toast } = useToast();
 
@@ -77,7 +76,29 @@ const DashboardPage: React.FC = () => {
       });
       setCurrentSpace(space);
       setIsCreator(response.data.isCreator);
+      setUserId(response.data.userId);
       await fetchStreams(space.id);
+
+      // Set up WebSocket connection
+      const wsClient = new WebSocket(
+        `ws://localhost:8080?spaceId=${space.id}&userId=${response.data.userId}`
+      );
+
+      wsClient.onopen = () => {
+        console.log("WebSocket connection established");
+      };
+
+      wsClient.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+      };
+
+      wsClient.onclose = () => {
+        console.log("WebSocket connection closed");
+      };
+
+      setWs(wsClient);
+
       toast({
         title: "Space Joined",
         description: "You have successfully joined the space.",
@@ -92,6 +113,35 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  const leaveSpace = async () => {
+    if (!currentSpace) return;
+
+    try {
+      await axios.post("/api/leave-space", { spaceId: currentSpace.id });
+      setCurrentSpace(null);
+      setQueue([]);
+      setCurrentSong(null);
+
+      // Close WebSocket connection
+      if (ws) {
+        ws.close();
+        setWs(null);
+      }
+
+      toast({
+        title: "Left Space",
+        description: "You have left the space.",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to leave space",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchStreams = async (spaceId: string) => {
     try {
       const response = await axios.get<{ streams: Stream[] }>(
@@ -100,6 +150,8 @@ const DashboardPage: React.FC = () => {
       setQueue(response.data.streams || []);
       if (response.data.streams && response.data.streams.length > 0) {
         setCurrentSong(response.data.streams[0]);
+      } else {
+        setCurrentSong(null);
       }
     } catch (error) {
       console.error("Failed to fetch streams:", error);
@@ -123,6 +175,16 @@ const DashboardPage: React.FC = () => {
         setNewSongUrl("");
         if (!currentSong) {
           setCurrentSong(response.data.stream);
+        }
+
+        // Notify other users about the updated queue
+        if (ws) {
+          ws.send(
+            JSON.stringify({
+              type: "update-queue",
+              payload: {},
+            })
+          );
         }
       }
       toast({
@@ -164,28 +226,45 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const onVideoEnd = () => {
-    playNext();
+  const playNext = async () => {
+    if (!currentSpace) return;
+
+    try {
+      await axios.post(`/api/space/${currentSpace.id}/play-next`);
+      // Notify other users to update their current song
+      if (ws) {
+        ws.send(
+          JSON.stringify({
+            type: "play-next",
+            payload: {},
+          })
+        );
+      }
+      toast({
+        title: "Playing Next Song",
+        description: "The next song is now playing.",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to play next song",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const playNext = () => {
-    const newQueue = [...queue];
-    newQueue.shift();
-    setQueue(newQueue);
-    if (newQueue.length > 0) {
-      setCurrentSong(newQueue[0]);
-      toast({
-        title: "Song Playing",
-        description: "Song has started playing.",
-        variant: "default",
-      });
-    } else {
-      setCurrentSong(null);
-      toast({
-        title: "Queue Empty",
-        description: "No more songs in the queue.",
-        variant: "default",
-      });
+  const onVideoEnd = () => {
+    if (isCreator) {
+      playNext();
+    }
+  };
+
+  const handleWebSocketMessage = async (data: any) => {
+    if (data.type === "play-next") {
+      await fetchStreams(currentSpace?.id || "");
+    } else if (data.type === "update-queue") {
+      await fetchStreams(currentSpace?.id || "");
     }
   };
 
@@ -196,20 +275,20 @@ const DashboardPage: React.FC = () => {
   const renderPlayer = () => {
     if (!currentSong) return null;
 
-    if (isSpotifyTrack(currentSong.url)) {
-      const size = {
-        width: "100%",
-        height: 80,
-      };
-      const view = "list";
-      const theme = "black";
+    const playbackPositionInSeconds = currentSong.startedAt
+      ? Math.floor(
+          (Date.now() - new Date(currentSong.startedAt).getTime()) / 1000
+        )
+      : 0;
 
+    if (isSpotifyTrack(currentSong.url)) {
+      // Note: SpotifyPlayer may not support starting at a specific position
       return (
         <SpotifyPlayer
           uri={`spotify:track:${currentSong.extractedurl}`}
-          size={size}
-          view={view}
-          theme={theme}
+          size={{ width: "100%", height: 80 }}
+          view="list"
+          theme="black"
         />
       );
     } else {
@@ -219,7 +298,10 @@ const DashboardPage: React.FC = () => {
           opts={{
             width: "100%",
             height: "200",
-            playerVars: { autoplay: 1 },
+            playerVars: {
+              autoplay: 1,
+              start: playbackPositionInSeconds,
+            },
           }}
           onEnd={onVideoEnd}
           ref={playerRef}
@@ -291,7 +373,7 @@ const DashboardPage: React.FC = () => {
                       {space.description || "No description"}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      Created by: {space.author || "Unknown"}
+                      Created by: {space.author?.name || "Unknown"}
                     </p>
                   </CardContent>
                 </Card>
@@ -310,7 +392,7 @@ const DashboardPage: React.FC = () => {
                 {currentSpace.description}
               </p>
             </div>
-            <Button variant="destructive" onClick={() => setCurrentSpace(null)}>
+            <Button variant="destructive" onClick={leaveSpace}>
               Leave Space
             </Button>
           </div>
@@ -320,13 +402,15 @@ const DashboardPage: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex justify-between items-center">
                     Now Playing
-                    <Button
-                      onClick={playNext}
-                      disabled={queue.length <= 1}
-                      variant="secondary"
-                    >
-                      Play Next
-                    </Button>
+                    {isCreator && (
+                      <Button
+                        onClick={playNext}
+                        disabled={queue.length <= 1}
+                        variant="secondary"
+                      >
+                        Play Next
+                      </Button>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -365,7 +449,7 @@ const DashboardPage: React.FC = () => {
                 <CardContent className="p-0">
                   <ScrollArea className="h-[400px]">
                     {queue.length > 1 ? (
-                      queue.slice(1).map((song, index) => (
+                      queue.slice(1).map((song) => (
                         <div
                           key={song.id}
                           className="px-4 py-2 border-b border-gray-200 hover:bg-gray-50 transition-colors"

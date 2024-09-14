@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       message: "Successfully joined space",
       status: 200,
-      isCreator
+      isCreator,
+      userId: user.id,
     });
   } catch (e) {
     console.error(e);

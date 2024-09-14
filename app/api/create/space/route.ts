@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 
 const SpaceSchema = z.object({
@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
       data: {
         name: data.name,
         description: data.description,
-        author: session.user.name || "Anonymous",
         authorId: user.id,
       },
     });
@@ -47,7 +46,9 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   try {
     const spaces = await prisma.space.findMany({
-        include: { user: true},
+      include: {
+        author: true,
+      },
     });
     return NextResponse.json({ spaces, status: 200 });
   } catch (e) {
