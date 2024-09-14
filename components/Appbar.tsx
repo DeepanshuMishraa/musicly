@@ -1,34 +1,39 @@
-'use client';
+"use client";
 
-import { signIn, signOut, useSession } from "next-auth/react"
+import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "./ui/button";
+import { Kanit } from "next/font/google";
+import { ModeToggle } from "./ui/dark-mode-toggle";
 
-export const Appbar = ()=>{
+const kanit = Kanit({ subsets: ["latin"], weight: ["600"] });
 
-    const session  = useSession();
-    return (
-      <div className="flex justify-between p-4 border-b">
+export const Appbar = () => {
+  const session = useSession();
+  return (
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 w-11/12 max-w-6xl p-2 font-semibold rounded-full backdrop-blur-2xl bg-white/70 dark:bg-black/10 z-50">
+      <div className="flex gap-4 justify-between items-center p-2">
         <div>
-          <Link href="/" className="font-bold text-3xl">Musly</Link>
+          <Link href="/" className={`text-2xl ${kanit.className}`}>
+            Musly
+          </Link>
         </div>
-        <div >
-          {session.data?.user ? (
-            <Button
-            variant="secondary"
-              onClick={() => signOut()}
-            >
-              Sign out
-            </Button>
+
+        <div className="hidden md:flex space-x-6">
+          <Link href="#features">Features</Link>
+          <Link href="#pricing">Pricing</Link>
+          <Link href="#github">Github</Link>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <ModeToggle />
+          {session.data ? (
+            <Button onClick={() => signOut()}>Logout</Button>
           ) : (
-            <Button
-              variant="secondary"
-              onClick={() => signIn()}
-            >
-              Sign in
-            </Button>
+            <Button onClick={() => signIn()}>Login</Button>
           )}
         </div>
       </div>
-    );
-}
+    </div>
+  );
+};
