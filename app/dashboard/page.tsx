@@ -1,16 +1,28 @@
-'use client'
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { useSession } from 'next-auth/react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import YouTube from 'react-youtube';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Appbar } from '@/components/Appbar';
-import SpotifyPlayer from 'react-spotify-player';
-import { useToast } from '@/hooks/use-toast';
+import YouTube from "react-youtube";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Appbar } from "@/components/Appbar";
+import SpotifyPlayer from "react-spotify-player";
+import { useToast } from "@/hooks/use-toast";
 
 interface Space {
   id: string;
@@ -31,13 +43,13 @@ const DashboardPage: React.FC = () => {
   const { data: session } = useSession();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [currentSpace, setCurrentSpace] = useState<Space | null>(null);
-  const [newSongUrl, setNewSongUrl] = useState<string>('');
+  const [newSongUrl, setNewSongUrl] = useState<string>("");
   const [isCreator, setIsCreator] = useState<boolean>(false);
   const [currentSong, setCurrentSong] = useState<Stream | null>(null);
   const [queue, setQueue] = useState<Stream[]>([]);
   const playerRef = useRef<YouTube>(null);
-  const [newSpaceName, setNewSpaceName] = useState<string>('');
-  const [newSpaceDescription, setNewSpaceDescription] = useState<string>('');
+  const [newSpaceName, setNewSpaceName] = useState<string>("");
+  const [newSpaceDescription, setNewSpaceDescription] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
@@ -48,11 +60,13 @@ const DashboardPage: React.FC = () => {
 
   const fetchSpaces = async () => {
     try {
-      const response = await axios.get<{ spaces: Space[] }>('/api/create/space');
+      const response = await axios.get<{ spaces: Space[] }>(
+        "/api/create/space"
+      );
       setSpaces(response.data.spaces || []);
     } catch (error) {
-      console.error('Failed to fetch spaces:', error);
-      setError('Failed to fetch spaces. Please try again later.');
+      console.error("Failed to fetch spaces:", error);
+      setError("Failed to fetch spaces. Please try again later.");
     }
   };
 
@@ -65,29 +79,31 @@ const DashboardPage: React.FC = () => {
       setIsCreator(response.data.isCreator);
       await fetchStreams(space.id);
       toast({
-        title: 'Space Joined',
-        description: 'You have successfully joined the space.',
+        title: "Space Joined",
+        description: "You have successfully joined the space.",
         variant: "default",
-      })
+      });
     } catch (error) {
       toast({
-        title: 'Failed to join space',
-        description: 'Please try again later.',
+        title: "Failed to join space",
+        description: "Please try again later.",
         variant: "destructive",
-      })
+      });
     }
   };
 
   const fetchStreams = async (spaceId: string) => {
     try {
-      const response = await axios.get<{ streams: Stream[] }>(`/api/create/stream?spaceId=${spaceId}`);
+      const response = await axios.get<{ streams: Stream[] }>(
+        `/api/create/stream?spaceId=${spaceId}`
+      );
       setQueue(response.data.streams || []);
       if (response.data.streams && response.data.streams.length > 0) {
         setCurrentSong(response.data.streams[0]);
       }
     } catch (error) {
-      console.error('Failed to fetch streams:', error);
-      setError('Failed to fetch streams. Please try again later.');
+      console.error("Failed to fetch streams:", error);
+      setError("Failed to fetch streams. Please try again later.");
     }
   };
 
@@ -95,53 +111,56 @@ const DashboardPage: React.FC = () => {
     if (!newSongUrl || !currentSpace) return;
 
     try {
-      const response = await axios.post<{ stream: Stream }>('/api/create/stream', {
-        spaceId: currentSpace.id,
-        url: newSongUrl,
-      });
+      const response = await axios.post<{ stream: Stream }>(
+        "/api/create/stream",
+        {
+          spaceId: currentSpace.id,
+          url: newSongUrl,
+        }
+      );
       if (response.data.stream) {
         setQueue([...queue, response.data.stream]);
-        setNewSongUrl('');
+        setNewSongUrl("");
         if (!currentSong) {
           setCurrentSong(response.data.stream);
         }
       }
       toast({
-        title: 'Song Added Successfully',
-        description: 'Song has been added to the queue.',
+        title: "Song Added Successfully",
+        description: "Song has been added to the queue.",
         variant: "default",
-      })
+      });
     } catch (error) {
       toast({
-        title: 'Failed to add song',
-        description: 'Please try again later.',
+        title: "Failed to add song",
+        description: "Please try again later.",
         variant: "destructive",
-      })
+      });
     }
   };
 
   const createSpace = async () => {
     try {
-      const response = await axios.post<{ space: Space }>('/api/create/space', {
+      const response = await axios.post<{ space: Space }>("/api/create/space", {
         name: newSpaceName,
         description: newSpaceDescription,
       });
       if (response.data.space) {
         setSpaces([...spaces, response.data.space]);
-        setNewSpaceName('');
-        setNewSpaceDescription('');
+        setNewSpaceName("");
+        setNewSpaceDescription("");
       }
       toast({
-        title: 'Space Created Successfully',
-        description: 'Space has been created.',
+        title: "Space Created Successfully",
+        description: "Space has been created.",
         variant: "default",
-      })
+      });
     } catch (error) {
       toast({
-        title: 'Failed to create space',
-        description: 'Please try again later.',
+        title: "Failed to create space",
+        description: "Please try again later.",
         variant: "destructive",
-      })
+      });
     }
   };
 
@@ -156,22 +175,22 @@ const DashboardPage: React.FC = () => {
     if (newQueue.length > 0) {
       setCurrentSong(newQueue[0]);
       toast({
-        title: 'Song Playing',
-        description: 'Song has started playing.',
+        title: "Song Playing",
+        description: "Song has started playing.",
         variant: "default",
-      })
+      });
     } else {
       setCurrentSong(null);
       toast({
-        title: 'Queue Empty',
-        description: 'No more songs in the queue.',
+        title: "Queue Empty",
+        description: "No more songs in the queue.",
         variant: "default",
-      })
+      });
     }
   };
 
   const isSpotifyTrack = (url: string) => {
-    return url.includes('spotify.com/track/');
+    return url.includes("spotify.com/track/");
   };
 
   const renderPlayer = () => {
@@ -179,11 +198,11 @@ const DashboardPage: React.FC = () => {
 
     if (isSpotifyTrack(currentSong.url)) {
       const size = {
-        width: '100%',
-        height: 300,
+        width: "100%",
+        height: 80,
       };
-      const view = 'list';
-      const theme = 'black';
+      const view = "list";
+      const theme = "black";
 
       return (
         <SpotifyPlayer
@@ -197,7 +216,11 @@ const DashboardPage: React.FC = () => {
       return (
         <YouTube
           videoId={currentSong.extractedurl}
-          opts={{ width: '100%', height: '300', playerVars: { autoplay: 1 } }}
+          opts={{
+            width: "100%",
+            height: "200",
+            playerVars: { autoplay: 1 },
+          }}
           onEnd={onVideoEnd}
           ref={playerRef}
         />
@@ -206,14 +229,22 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mt-12 p-4">
       <Appbar />
 
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
+      {error && (
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
 
       {!currentSpace ? (
-        <div>
-          <div className="mt-8 mb-4">
+        <div className="mt-8">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Available Spaces</h1>
             <Dialog>
               <DialogTrigger asChild>
                 <Button>Create New Space</Button>
@@ -226,80 +257,132 @@ const DashboardPage: React.FC = () => {
                   <Input
                     placeholder="Space Name"
                     value={newSpaceName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSpaceName(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setNewSpaceName(e.target.value)
+                    }
                   />
                   <Input
                     placeholder="Space Description"
                     value={newSpaceDescription}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSpaceDescription(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setNewSpaceDescription(e.target.value)
+                    }
                   />
                   <Button onClick={createSpace}>Create Space</Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {spaces.map((space) => (
-              <Card key={space.id}>
-                <CardHeader>
-                  <CardTitle>{space.name || 'Unnamed Space'}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{space.description || 'No description'}</p>
-                  <p className="text-sm text-gray-500">Created by: {space.author || 'Unknown'}</p>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={() => joinSpace(space)}>Join Space</Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+          {spaces.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {spaces.map((space) => (
+                <Card
+                  key={space.id}
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => joinSpace(space)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold">
+                      {space.name || "Unnamed Space"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600">
+                      {space.description || "No description"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Created by: {space.author || "Unknown"}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">No spaces available.</p>
+          )}
         </div>
       ) : (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{currentSpace.name}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  Now Playing
-                  <Button onClick={playNext} disabled={queue.length <= 1}>Play Next</Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {currentSong && (
-                  <div>
-                    {renderPlayer()}
-                    <p className="mt-2">{currentSong.title}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Songs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[300px]">
-                  {queue.slice(1).map((song, index) => (
-                    <div key={song.id} className="mb-2">
-                      <p>{index + 1}. {song.title}</p>
-                    </div>
-                  ))}
-                </ScrollArea>
-              </CardContent>
-            </Card>
+        <div className="mt-8">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">{currentSpace.name}</h2>
+              <p className="text-sm text-gray-600">
+                {currentSpace.description}
+              </p>
+            </div>
+            <Button variant="destructive" onClick={() => setCurrentSpace(null)}>
+              Leave Space
+            </Button>
           </div>
-          <div className="mt-4">
-            <Input
-              type="text"
-              placeholder="Paste YouTube or Spotify URL here"
-              value={newSongUrl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSongUrl(e.target.value)}
-            />
-            <Button onClick={createStream} className="mt-2">Add to Queue</Button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center">
+                    Now Playing
+                    <Button
+                      onClick={playNext}
+                      disabled={queue.length <= 1}
+                      variant="secondary"
+                    >
+                      Play Next
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {currentSong ? (
+                    <>
+                      {renderPlayer()}
+                      <p className="mt-4 text-lg font-semibold">
+                        {currentSong.title}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No song is playing.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+              <div className="flex items-center">
+                <Input
+                  type="text"
+                  placeholder="Paste YouTube or Spotify URL here"
+                  value={newSongUrl}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewSongUrl(e.target.value)
+                  }
+                  className="flex-1 mr-2"
+                />
+                <Button onClick={createStream}>Add to Queue</Button>
+              </div>
+            </div>
+            <div>
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle>Queue</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[400px]">
+                    {queue.length > 1 ? (
+                      queue.slice(1).map((song, index) => (
+                        <div
+                          key={song.id}
+                          className="px-4 py-2 border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                        >
+                          <p className="text-sm font-medium">{song.title}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center text-gray-500 mt-4">
+                        The queue is empty.
+                      </p>
+                    )}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-          <Button onClick={() => setCurrentSpace(null)} className="mt-4">Leave Space</Button>
         </div>
       )}
     </div>
