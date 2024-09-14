@@ -1,5 +1,6 @@
 import { Appbar } from "@/components/Appbar"
 import { Hero } from "@/components/Hero"
+import { Tooltip } from "@/components/Tooltip"
 
 
 export default function Home(){
@@ -7,6 +8,7 @@ export default function Home(){
         <>
         <Appbar/>
         <Hero/>
+        <Tooltip/>
         </>
     )
 }
