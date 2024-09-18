@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 //@ts-ignore
 import youtubesearchapi from "youtube-search-api";
+import Error from "next/error";
 
 const StreamSchema = z.object({
   spaceId: z.string(),
@@ -83,14 +84,15 @@ export async function POST(req: NextRequest) {
       { message: "Stream created", stream },
       { status: 200 }
     );
-  } catch (e) {
-    console.error(e);
+  } catch (e: any) {
+    console.error(e.message);
     return NextResponse.json(
       { message: "Failed to create stream" },
       { status: 500 }
     );
   }
 }
+
 
 export async function GET(req: NextRequest) {
   try {
