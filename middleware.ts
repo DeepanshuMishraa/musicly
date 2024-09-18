@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const token = await getToken({ req });
+
   const publicPaths =
     path === "/" || path === "/login" || path === "/protected";
 
