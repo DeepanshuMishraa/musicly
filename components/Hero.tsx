@@ -11,7 +11,7 @@ import { Feature } from "./bento";
 export function Hero() {
   return (
     <>
-      <div className="h-[40rem] space-y-2 rounded-md bg-neutral-900 flex flex-col items-center justify-center relative w-full">
+      <div className="h-[40rem] space-y-2 max-lg:space-y-6 rounded-md bg-neutral-900 flex flex-col items-center justify-center relative w-full">
         <h2 className="relative flex-col md:flex-row z-10 text-3xl md:text-6xl md:leading-tight max-w-5xl mx-auto text-center tracking-tight font-medium bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 via-white to-white flex items-center gap-2 md:gap-8">
           <span>
             Stream together
@@ -19,7 +19,7 @@ export function Hero() {
           </span>
         </h2>
         <div className="flex flex-col items-center gap-y-8">
-          <p className="text-gray-400 text-lg ">
+          <p className="text-gray-400 text-lg max-lg:text-center ">
             With our seamless music streaming platform create spaces
             <br /> add songs, and listen together with people worldwide easily.
           </p>

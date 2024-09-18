@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { redirect } from "next/dist/server/api-utils";
 
 const handler = NextAuth({
   providers: [
@@ -36,7 +37,7 @@ const handler = NextAuth({
           provider: params.account?.provider,
         },
       });
-      return true;
+      return true
     },
   },
 });
