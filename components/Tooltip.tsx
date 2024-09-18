@@ -2,6 +2,7 @@
 import React from "react";
 import { AnimatedTooltip } from "./ui/animated-tooltip";
 import { Button } from "./ui/button";
+import Link from "next/link";
 const people = [
   {
     id: 1,
@@ -66,12 +67,14 @@ export function Tooltip() {
           </p>
         </div>
         <div>
-          <Button
-            className="bg-blue-500 text-white shadow-lg shadow-gray-700"
-            variant={null}
-          >
-            Join a space
-          </Button>
+          <Link href="/dashboard">
+            <Button
+              className="bg-blue-500 text-white shadow-lg shadow-gray-700"
+              variant={null}
+            >
+              Join a space
+            </Button>
+          </Link>
         </div>
       </div>
       <div className="flex p-4 items-center">

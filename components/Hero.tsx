@@ -24,7 +24,7 @@ export function Hero() {
             <br /> add songs, and listen together with people worldwide easily.
           </p>
 
-          <Link className="z-10" href="/login">
+          <Link className="z-10" href="/dashboard">
             <Button className="p-4">
               Stream Now <ArrowRightIcon className="ml-2 hover:animate-ping" />
             </Button>

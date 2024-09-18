@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev & ts-node websocket-server.ts",
     "build": "next build",
-    "start": "next start & ts-node websocket-server.ts",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
