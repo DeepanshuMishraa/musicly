@@ -78,7 +78,7 @@ const DashboardPage: React.FC = () => {
       if (currentSpace) {
         fetchStreams(currentSpace.id);
       }
-    }, 5000); // Poll every 5 seconds
+    }, 1000); // Poll every second for more frequent updates
     setPollInterval(interval);
   }, [currentSpace]);
 
@@ -91,9 +91,7 @@ const DashboardPage: React.FC = () => {
 
   const fetchSpaces = async () => {
     try {
-      const response = await axios.get<{ spaces: Space[] }>(
-        "/api/create/space"
-      );
+      const response = await axios.get<{ spaces: Space[] }>("/api/create/space");
       setSpaces(response.data.spaces || []);
     } catch (error) {
       console.error("Failed to fetch spaces:", error);
@@ -131,18 +129,11 @@ const DashboardPage: React.FC = () => {
       );
       const newStreams = response.data.streams || [];
 
-      if (JSON.stringify(newStreams) !== JSON.stringify(queue)) {
-        setQueue(newStreams);
-        if (newStreams.length > 0 && !currentSong) {
-          setCurrentSong(newStreams[0]);
-        }
-        if (newStreams.length > queue.length) {
-          toast({
-            title: "New Song Added",
-            description: "A new song has been added to the queue.",
-            variant: "default",
-          });
-        }
+      setQueue(newStreams);
+      if (newStreams.length > 0 && (!currentSong || !newStreams.find(s => s.id === currentSong.id))) {
+        setCurrentSong(newStreams[0]);
+      } else if (newStreams.length === 0) {
+        setCurrentSong(null);
       }
     } catch (error) {
       console.error("Failed to fetch streams:", error);
@@ -154,19 +145,13 @@ const DashboardPage: React.FC = () => {
     if (!newSongUrl || !currentSpace) return;
 
     try {
-      const response = await axios.post<{ stream: Stream }>(
-        "/api/create/stream",
-        {
-          spaceId: currentSpace.id,
-          url: newSongUrl,
-        }
-      );
+      const response = await axios.post<{ stream: Stream }>("/api/create/stream", {
+        spaceId: currentSpace.id,
+        url: newSongUrl,
+      });
       if (response.data.stream) {
         setNewSongUrl("");
-        setQueue((prevQueue) => [...prevQueue, response.data.stream]);
-        if (!currentSong) {
-          setCurrentSong(response.data.stream);
-        }
+        await fetchStreams(currentSpace.id);
       }
       toast({
         title: "Song Added Successfully",
@@ -188,33 +173,22 @@ const DashboardPage: React.FC = () => {
     try {
       await axios.delete("/api/delete", {
         data: {
-          id: currentSong.id,
-        },
+          id: currentSong.id
+        }
       });
 
-      setQueue((prevQueue) =>
-        prevQueue.filter((song) => song.id !== currentSong.id)
-);
-
-      if (queue.length > 1) {
-        setCurrentSong(queue[1]);
-        setQueue((prevQueue) => prevQueue.slice(1));
-      } else {
-        setCurrentSong(null);
-        setQueue([]);
-      }
+      await fetchStreams(currentSpace.id);
 
       toast({
         title: "Song Deleted",
         description: "Song has been deleted from the queue",
-        variant: "default",
+        variant: "default"
       });
     } catch (err) {
       toast({
         title: "Failed to delete song",
-        description:
-          "You don't have permission to delete this song or an error occurred.",
-        variant: "destructive",
+        description: "You don't have permission to delete this song or an error occurred.",
+        variant: "destructive"
       });
     }
   };
@@ -248,7 +222,9 @@ const DashboardPage: React.FC = () => {
     playNext();
   };
 
-  const playNext = () => {
+  const playNext = async () => {
+    if (!currentSpace) return;
+
     if (queue.length <= 1) {
       setCurrentSong(null);
       setQueue([]);
@@ -260,14 +236,28 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    const newQueue = [...queue.slice(1)];
-    setQueue(newQueue);
-    setCurrentSong(newQueue[0]);
-    toast({
-      title: "Next Song",
-      description: "Playing the next song in the queue.",
-      variant: "default",
-    });
+    try {
+      await axios.delete("/api/delete", {
+        data: {
+          id: queue[0].id
+        }
+      });
+
+      await fetchStreams(currentSpace.id);
+
+      toast({
+        title: "Next Song",
+        description: "Playing the next song in the queue.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Failed to play next song:", error);
+      toast({
+        title: "Failed to play next song",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   const isSpotifyTrack = (url: string) => {
@@ -409,8 +399,11 @@ const DashboardPage: React.FC = () => {
                       Play Next
                     </Button>
                     {isCreator && currentSong && (
-                      <Button onClick={deleteStream} variant="secondary">
-                        <TrashIcon />
+                      <Button
+                        onClick={deleteStream}
+                        variant="secondary"
+                      >
+                        <TrashIcon/>
                       </Button>
                     )}
                   </CardTitle>
