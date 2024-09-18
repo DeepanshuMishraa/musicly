@@ -19,12 +19,6 @@ export const Appbar = () => {
           </Link>
         </div>
 
-        <div className="hidden md:flex space-x-6">
-          <Link href="#features">Features</Link>
-          <Link href="#pricing">Pricing</Link>
-          <Link href="#github">Github</Link>
-        </div>
-
         <div className="flex items-center gap-3">
           <ModeToggle />
           {session.data ? (
@@ -32,6 +26,8 @@ export const Appbar = () => {
           ) : (
             <Button onClick={() => signIn()}>Login</Button>
           )}
+
+          <Link href="http://github.com/DeepanshuMishraa"><Button>Github</Button></Link>
         </div>
       </div>
     </div>

@@ -77,6 +77,7 @@ export function Tooltip() {
       <div className="flex p-4 items-center">
         <AnimatedTooltip items={people} />
       </div>
+      <h1 className="p-4 text-gray-400">Trusted by 100+ Listeners</h1>
     </>
   );
 }
