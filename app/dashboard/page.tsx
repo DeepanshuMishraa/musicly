@@ -23,6 +23,8 @@ import {
 import { Appbar } from "@/components/Appbar";
 import SpotifyPlayer from "react-spotify-player";
 import { useToast } from "@/hooks/use-toast";
+import { Router, TrashIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Space {
   id: string;
@@ -40,7 +42,6 @@ interface Stream {
 }
 
 const DashboardPage: React.FC = () => {
-  const { data: session } = useSession();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [currentSpace, setCurrentSpace] = useState<Space | null>(null);
   const [newSongUrl, setNewSongUrl] = useState<string>("");
@@ -51,6 +52,7 @@ const DashboardPage: React.FC = () => {
   const [newSpaceName, setNewSpaceName] = useState<string>("");
   const [newSpaceDescription, setNewSpaceDescription] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const { toast } = useToast();
 
@@ -138,6 +140,35 @@ const DashboardPage: React.FC = () => {
       });
     }
   };
+
+  const deleteStream = async () => {
+    if (!currentSong || !isCreator) return;
+
+    try {
+      await axios.delete("/api/delete", {
+        data: {
+          id: currentSong.id,
+        },
+      });
+      toast({
+        title: "Song Deleted",
+        description: "Song has been deleted from the queue",
+        variant: "default",
+      });
+      // Refresh the queue after deletion
+      await fetchStreams(currentSpace!.id);
+
+    } catch (err) {
+      toast({
+        title: "Failed to delete song",
+        description:
+          "You don't have permission to delete this song or an error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
+
+
 
   const createSpace = async () => {
     try {
@@ -327,6 +358,15 @@ const DashboardPage: React.FC = () => {
                     >
                       Play Next
                     </Button>
+                    {isCreator && (
+                      <Button
+                        onClick={deleteStream}
+                        disabled={queue.length < 1}
+                        variant="secondary"
+                      >
+                        <TrashIcon />
+                      </Button>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
