@@ -27,7 +27,7 @@ export const Appbar = () => {
             <Button onClick={() => signIn()}>Login</Button>
           )}
 
-          <Link href="http://github.com/DeepanshuMishraa"><Button>Github</Button></Link>
+          <Link href="http://github.com"><Button>Github</Button></Link>
         </div>
       </div>
     </div>
