@@ -5,14 +5,14 @@ export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const token = await getToken({ req });
   const publicPaths =
-    path === "/" || path === "/api/auth/signin" || path === "/protected";
+    path === "/" || path === "/login" || path === "/protected";
 
   if (publicPaths && token) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
   }
 
   if (path === "/dashboard" && !token) {
-    return NextResponse.redirect(new URL("/api/auth/signin", req.nextUrl));
+    return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
   if (!publicPaths && !token) {
@@ -21,5 +21,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/auth/signin", "/dashboard", "/protected", "/"],
+  matcher: ["/login", "/dashboard", "/protected", "/"],
 };
