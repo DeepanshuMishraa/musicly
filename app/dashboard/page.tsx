@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import {
@@ -23,8 +23,7 @@ import {
 import { Appbar } from "@/components/Appbar";
 import SpotifyPlayer from "react-spotify-player";
 import { useToast } from "@/hooks/use-toast";
-import { Router, TrashIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { TrashIcon } from "lucide-react";
 
 interface Space {
   id: string;
@@ -42,6 +41,7 @@ interface Stream {
 }
 
 const DashboardPage: React.FC = () => {
+  const { data: session } = useSession();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [currentSpace, setCurrentSpace] = useState<Space | null>(null);
   const [newSongUrl, setNewSongUrl] = useState<string>("");
@@ -52,13 +52,42 @@ const DashboardPage: React.FC = () => {
   const [newSpaceName, setNewSpaceName] = useState<string>("");
   const [newSpaceDescription, setNewSpaceDescription] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
 
   const { toast } = useToast();
 
   useEffect(() => {
     fetchSpaces();
   }, []);
+
+  useEffect(() => {
+    if (currentSpace) {
+      startPolling();
+    } else {
+      stopPolling();
+    }
+
+    return () => stopPolling();
+  }, [currentSpace]);
+
+  const startPolling = useCallback(() => {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+    }
+    const interval = setInterval(() => {
+      if (currentSpace) {
+        fetchStreams(currentSpace.id);
+      }
+    }, 5000); // Poll every 5 seconds
+    setPollInterval(interval);
+  }, [currentSpace]);
+
+  const stopPolling = useCallback(() => {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      setPollInterval(null);
+    }
+  }, [pollInterval]);
 
   const fetchSpaces = async () => {
     try {
@@ -80,6 +109,7 @@ const DashboardPage: React.FC = () => {
       setCurrentSpace(space);
       setIsCreator(response.data.isCreator);
       await fetchStreams(space.id);
+      startPolling();
       toast({
         title: "Space Joined",
         description: "You have successfully joined the space.",
@@ -99,9 +129,20 @@ const DashboardPage: React.FC = () => {
       const response = await axios.get<{ streams: Stream[] }>(
         `/api/create/stream?spaceId=${spaceId}`
       );
-      setQueue(response.data.streams || []);
-      if (response.data.streams && response.data.streams.length > 0) {
-        setCurrentSong(response.data.streams[0]);
+      const newStreams = response.data.streams || [];
+
+      if (JSON.stringify(newStreams) !== JSON.stringify(queue)) {
+        setQueue(newStreams);
+        if (newStreams.length > 0 && !currentSong) {
+          setCurrentSong(newStreams[0]);
+        }
+        if (newStreams.length > queue.length) {
+          toast({
+            title: "New Song Added",
+            description: "A new song has been added to the queue.",
+            variant: "default",
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to fetch streams:", error);
@@ -121,8 +162,8 @@ const DashboardPage: React.FC = () => {
         }
       );
       if (response.data.stream) {
-        setQueue([...queue, response.data.stream]);
         setNewSongUrl("");
+        setQueue((prevQueue) => [...prevQueue, response.data.stream]);
         if (!currentSong) {
           setCurrentSong(response.data.stream);
         }
@@ -142,7 +183,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const deleteStream = async () => {
-    if (!currentSong || !isCreator) return;
+    if (!currentSong || !isCreator || !currentSpace) return;
 
     try {
       await axios.delete("/api/delete", {
@@ -150,14 +191,24 @@ const DashboardPage: React.FC = () => {
           id: currentSong.id,
         },
       });
+
+      setQueue((prevQueue) =>
+        prevQueue.filter((song) => song.id !== currentSong.id)
+);
+
+      if (queue.length > 1) {
+        setCurrentSong(queue[1]);
+        setQueue((prevQueue) => prevQueue.slice(1));
+      } else {
+        setCurrentSong(null);
+        setQueue([]);
+      }
+
       toast({
         title: "Song Deleted",
         description: "Song has been deleted from the queue",
         variant: "default",
       });
-      // Refresh the queue after deletion
-      await fetchStreams(currentSpace!.id);
-
     } catch (err) {
       toast({
         title: "Failed to delete song",
@@ -167,8 +218,6 @@ const DashboardPage: React.FC = () => {
       });
     }
   };
-
-
 
   const createSpace = async () => {
     try {
@@ -200,24 +249,25 @@ const DashboardPage: React.FC = () => {
   };
 
   const playNext = () => {
-    const newQueue = [...queue];
-    newQueue.shift();
-    setQueue(newQueue);
-    if (newQueue.length > 0) {
-      setCurrentSong(newQueue[0]);
-      toast({
-        title: "Song Playing",
-        description: "Song has started playing.",
-        variant: "default",
-      });
-    } else {
+    if (queue.length <= 1) {
       setCurrentSong(null);
+      setQueue([]);
       toast({
         title: "Queue Empty",
         description: "No more songs in the queue.",
         variant: "default",
       });
+      return;
     }
+
+    const newQueue = [...queue.slice(1)];
+    setQueue(newQueue);
+    setCurrentSong(newQueue[0]);
+    toast({
+      title: "Next Song",
+      description: "Playing the next song in the queue.",
+      variant: "default",
+    });
   };
 
   const isSpotifyTrack = (url: string) => {
@@ -353,17 +403,13 @@ const DashboardPage: React.FC = () => {
                     Now Playing
                     <Button
                       onClick={playNext}
-                      disabled={queue.length <= 1}
+                      disabled={!currentSong}
                       variant="secondary"
                     >
                       Play Next
                     </Button>
-                    {isCreator && (
-                      <Button
-                        onClick={deleteStream}
-                        disabled={queue.length < 1}
-                        variant="secondary"
-                      >
+                    {isCreator && currentSong && (
+                      <Button onClick={deleteStream} variant="secondary">
                         <TrashIcon />
                       </Button>
                     )}
