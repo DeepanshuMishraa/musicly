@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
           extractedId
         );
         title = videoDetails.title;
-        thumbnail = videoDetails.thumbnail.thumbnails[0].url;
+        thumbnail = videoDetails.thumbnail?.thumbnails[0]?.url;
       } catch (err: any) {
         console.error(
           `Failed to fetch YouTube video details: ${err.message}`,
