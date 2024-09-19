@@ -78,7 +78,7 @@ const DashboardPage: React.FC = () => {
       if (currentSpace) {
         fetchStreams(currentSpace.id);
       }
-    }, 1000); // Poll every second for more frequent updates
+    }, 5000); // Poll every second for more frequent updates
     setPollInterval(interval);
   }, [currentSpace]);
 
