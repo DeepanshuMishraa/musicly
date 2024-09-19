@@ -24,10 +24,14 @@ export const Appbar = () => {
           {session.data ? (
             <Button onClick={() => signOut()}>Logout</Button>
           ) : (
-            <Button onClick={() => signIn()}>Login</Button>
+            <Link href="/login">
+              <Button>Login</Button>
+            </Link>
           )}
 
-          <Link href="http://github.com"><Button>Github</Button></Link>
+          <Link href="http://github.com">
+            <Button>Github</Button>
+          </Link>
         </div>
       </div>
     </div>
