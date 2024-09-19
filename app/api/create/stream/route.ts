@@ -22,10 +22,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { message: "Unauthorized: Missing email in session" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Unauthorized: Missing email in session" }, { status: 401 });
     }
 
     // Parse the request body and validate using Zod schema
@@ -48,21 +45,33 @@ export async function POST(req: NextRequest) {
     if (isyt) {
       try {
         extractedId = isyt[1]; // Extracted YouTube video ID
-        const videoDetails = await youtubesearchapi.GetVideoDetails(
-          extractedId
-        );
+        const videoDetails = await youtubesearchapi.GetVideoDetails(extractedId);
+
+        // Log the entire API response for debugging in production
+        console.log("YouTube Video Details Response:", videoDetails);
+
+        // Check if title exists
+        if (!videoDetails || !videoDetails.title) {
+          throw new Error('Invalid video details returned from YouTube API');
+        }
+
+        // Check if thumbnails exist and use optional chaining to safely access them
+        if (!videoDetails.thumbnail?.thumbnails?.length) {
+          console.warn(`No thumbnails found for video ID: ${extractedId}`);
+          thumbnail = '/fallback.jpg'; // Fallback thumbnail
+        } else {
+          // Log the thumbnail details for debugging in production
+          console.log("Thumbnails array:", videoDetails.thumbnail.thumbnails);
+
+          // Access the first thumbnail safely
+          thumbnail = videoDetails.thumbnail.thumbnails[0].url;
+        }
+
         title = videoDetails.title;
-        thumbnail = videoDetails.thumbnail?.thumbnails[0]?.url;
       } catch (err: any) {
-        console.error(
-          `Failed to fetch YouTube video details: ${err.message}`,
-          err.stack
-        );
+        console.error(`Failed to fetch YouTube video details: ${err.message}`, err.stack);
         return NextResponse.json(
-          {
-            message: "Failed to fetch YouTube video details",
-            error: err.message,
-          },
+          { message: "Failed to fetch YouTube video details", error: err.message },
           { status: 500 }
         );
       }
@@ -83,10 +92,7 @@ export async function POST(req: NextRequest) {
 
       if (existingStream) {
         return NextResponse.json(
-          {
-            message: "Stream already in the queue or currently playing",
-            streamId: existingStream.id,
-          },
+          { message: "Stream already in the queue or currently playing", streamId: existingStream.id },
           { status: 400 }
         );
       }
@@ -102,20 +108,11 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      return NextResponse.json(
-        { message: "Stream created successfully", stream },
-        { status: 200 }
-      );
+      return NextResponse.json({ message: "Stream created successfully", stream }, { status: 200 });
     } catch (dbError: any) {
-      console.error(
-        `Failed to store stream in database: ${dbError.message}`,
-        dbError.stack
-      );
+      console.error(`Failed to store stream in database: ${dbError.message}`, dbError.stack);
       return NextResponse.json(
-        {
-          message: "Database error: Failed to store stream",
-          error: dbError.message,
-        },
+        { message: "Database error: Failed to store stream", error: dbError.message },
         { status: 500 }
       );
     }
@@ -123,10 +120,7 @@ export async function POST(req: NextRequest) {
     console.error(`Unhandled error in POST stream: ${e.message}`, e.stack);
     // Optionally capture the error with Sentry
     // Sentry.captureException(e);
-    return NextResponse.json(
-      { message: "Failed to create stream", error: e.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to create stream", error: e.message }, { status: 500 });
   }
 }
 
@@ -150,15 +144,9 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({ streams }, { status: 200 });
     } catch (dbError: any) {
-      console.error(
-        `Database error: Failed to fetch streams for spaceId ${spaceId}: ${dbError.message}`,
-        dbError.stack
-      );
+      console.error(`Database error: Failed to fetch streams for spaceId ${spaceId}: ${dbError.message}`, dbError.stack);
       return NextResponse.json(
-        {
-          message: "Failed to fetch streams from database",
-          error: dbError.message,
-        },
+        { message: "Failed to fetch streams from database", error: dbError.message },
         { status: 500 }
       );
     }
@@ -166,9 +154,6 @@ export async function GET(req: NextRequest) {
     console.error(`Unhandled error in GET streams: ${e.message}`, e.stack);
     // Optionally capture the error with Sentry
     // Sentry.captureException(e);
-    return NextResponse.json(
-      { message: "Failed to fetch streams", error: e.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to fetch streams", error: e.message }, { status: 500 });
   }
 }
