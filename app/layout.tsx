@@ -12,7 +12,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Musly",
-  description: "A group music streaming app",
+  description: "A group music streaming platform for everyone",
 };
 
 export default function RootLayout({

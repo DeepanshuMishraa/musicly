@@ -7,14 +7,14 @@ export function VideoDialog() {
         className="dark:hidden block"
         animationStyle="from-center"
         videoSrc="https://www.youtube.com/watch?v=GLJ-AOVEQ4E&t=3s"
-        thumbnailSrc="https://startup-template-sage.vercel.app/hero-light.png"
+        thumbnailSrc="/view.png"
         thumbnailAlt="Hero Video"
       />
       <HeroVideoDialog
         className="hidden dark:block"
         animationStyle="from-center"
         videoSrc="https://www.youtube.com/watch?v=GLJ-AOVEQ4E&t=3s"
-        thumbnailSrc="https://startup-template-sage.vercel.app/hero-dark.png"
+        thumbnailSrc="/view.png"
         thumbnailAlt="Hero Video"
       />
     </div>
