@@ -239,6 +239,34 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  const deleteSpace = async()=>{
+    if(!currentSpace || !isCreator) return;
+
+    try {
+      await axios.delete("/api/delete/space", {
+        data: {
+          id: currentSpace.id,
+        },
+      });
+
+      setCurrentSpace(null);
+      setSpaces(spaces.filter((space) => space.id !== currentSpace.id));
+
+      toast({
+        title: "Space Deleted",
+        description: "Space has been deleted.",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete space",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+
+  }
+
   const onVideoEnd = () => {
     playNext();
   };
@@ -373,7 +401,7 @@ const DashboardPage: React.FC = () => {
                   className="hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => joinSpace(space)}
                 >
-                  <CardHeader>
+                  <CardHeader className="flex">
                     <CardTitle className="text-lg font-semibold">
                       {space.name || "Unnamed Space"}
                     </CardTitle>
