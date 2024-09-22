@@ -439,6 +439,13 @@ const DashboardPage: React.FC = () => {
               </Button>
               <ShareComponent spaceId={currentSpace.id} />
             </div>
+            <div>
+                {isCreator &&(
+                    <Button variant="destructive" onClick={deleteSpace}>
+                        Delete Space
+                    </Button>
+                )}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">

@@ -38,9 +38,9 @@ export async function DELETE(req: NextRequest) {
 
     // if the user is the owner, proceed with deletion
 
-    const deletedSpace = await prisma.space.delete({
+    await prisma.space.delete({
         where:{
-            id:id
+            id
         }
     });
 
@@ -50,7 +50,7 @@ export async function DELETE(req: NextRequest) {
     } catch (e) {
     return NextResponse.json(
       {
-        error: "Something went wrong",
+        error: `Error : ${e}`,
       },
       { status: 500 }
     );
