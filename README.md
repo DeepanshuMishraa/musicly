@@ -23,3 +23,5 @@ Musly allows you to join spaces and listen to music together with others. You ca
 - [x] revamping the UI
 - [x] implementing toast and middlewares
 - [x] adding a sharing feature
+- [x] deleting a stream/ space
+
