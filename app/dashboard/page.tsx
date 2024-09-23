@@ -259,8 +259,8 @@ const DashboardPage: React.FC = () => {
       });
     } catch (error) {
       toast({
-        title: "Failed to delete space",
-        description: "Please try again later.",
+        title: "Space not empty",
+        description: "Remove all the streams to delete the space",
         variant: "destructive",
       });
     }
