@@ -15,7 +15,7 @@ const page = () => {
         </CardHeader>
         <CardContent>
           <Button onClick={()=>signIn()}>
-            Sign in with Google <IconBrandGoogle />
+           <IconBrandGoogle className="mr-2" /> Sign in with Google
           </Button>
         </CardContent>
       </Card>
