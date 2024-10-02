@@ -43,4 +43,5 @@ model Stream{
     spaceId String
     space Space @relation(fields: [spaceId], references: [id])
     createdAt DateTime @default(now())
+    upvotes Int  @default(0)
 }
