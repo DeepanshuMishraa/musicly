@@ -40,6 +40,9 @@ interface Stream {
   extractedurl: string;
   url: string;
 }
+interface upvote{
+    upvotes:number
+}
 
 const DashboardPage: React.FC = () => {
   const { data: session } = useSession();
@@ -54,6 +57,7 @@ const DashboardPage: React.FC = () => {
   const [newSpaceDescription, setNewSpaceDescription] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
+  const [upvote,setUpvote] = useState<upvote | number>(0);
 
   const { toast } = useToast();
 
@@ -271,6 +275,29 @@ const DashboardPage: React.FC = () => {
     playNext();
   };
 
+  const upvoteSong = async () => {
+    if (!currentSong) return;
+
+    try {
+      const response = await axios.post("/api/upvote", {
+        streamID: currentSong.id,
+      });
+      setUpvote(response.data.upvotes);
+      toast({
+        title: "Song Upvoted",
+        description: `The song now has ${response.data.upvotes} upvotes.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Failed to upvote song:", error);
+      toast({
+        title: "Failed to upvote song",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const playNext = async () => {
     if (!currentSpace) return;
 
@@ -440,11 +467,11 @@ const DashboardPage: React.FC = () => {
               <ShareComponent spaceId={currentSpace.id} />
             </div>
             <div>
-                {isCreator &&(
-                    <Button variant="destructive" onClick={deleteSpace}>
-                        Delete Space
-                    </Button>
-                )}
+              {isCreator && (
+                <Button variant="destructive" onClick={deleteSpace}>
+                  Delete Space
+                </Button>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -459,6 +486,12 @@ const DashboardPage: React.FC = () => {
                       variant="secondary"
                     >
                       Play Next
+                    </Button>
+                    <Button
+                      onClick={upvoteSong}
+                      variant="secondary"
+                    >
+                      Upvotes : {JSON.stringify(upvote)}
                     </Button>
                     {isCreator && currentSong && (
                       <Button onClick={deleteStream} variant="secondary">

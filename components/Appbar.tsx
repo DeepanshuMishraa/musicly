@@ -29,7 +29,7 @@ export const Appbar = () => {
             </Link>
           )}
 
-          <Link href="http://github.com">
+          <Link href="http://github.com/DeepanshuMishraa/musly">
             <Button>Github</Button>
           </Link>
         </div>
